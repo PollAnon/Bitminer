@@ -494,27 +494,7 @@
         }
         
         // Reward Functions
-        function claimMiningReward() {
-            if (!state.canClaim) return;
-            
-            const reward = randInt(1, 5);
-            addTxn('mining', reward);
-            
-            state.canClaim = false;
-            state.miningProgress = 0;
-            state.miningCycleStartedAt = Date.now();
-            setMiningCycleStartedAt(state.miningCycleStartedAt);
-            startMiningTimer(); // Start new cycle immediately
-            
-            Swal.fire({
-                title: 'Reward Claimed!',
-                text: `You earned ${reward} satoshi (${toBTC(reward)} BTC)`,
-                icon: 'success',
-                confirmButtonColor: '#f97316',
-            });
-            
-            renderDashboard();
-        }
+        
         
         function spinWheel() {
             const now = Date.now();
@@ -523,7 +503,31 @@
             if (lastSpinAt > 0 && now - lastSpinAt < 24 * 60 * 60 * 1000) {
                 Swal.fire({
                     title: 'Cooldown Active',
-                    text: 'You can spin again in ' + formatHHMMSS(msUntil(lastSpinAt + 24 * 60 * 60 * 1000)),
+                    text: 'You can spin again in ' + formatHHMMSS(msUntil(lastSpinAfunction claimMiningReward() {
+    if (!state.canClaim) return;
+
+    // Show Ad first
+    showRewardedAd(() => {
+        // This code runs AFTER the ad is completed
+        const reward = randInt(1, 5);
+        addTxn('mining', reward);
+
+        state.canClaim = false;
+        state.miningProgress = 0;
+        state.miningCycleStartedAt = Date.now();
+        setMiningCycleStartedAt(state.miningCycleStartedAt);
+        startMiningTimer(); // Start new cycle immediately
+
+        Swal.fire({
+            title: 'Reward Claimed!',
+            text: `You earned ${reward} satoshi (${toBTC(reward)} BTC)`,
+            icon: 'success',
+            confirmButtonColor: '#f97316',
+        });
+
+        renderDashboard();
+    });
+        }t + 24 * 60 * 60 * 1000)),
                     icon: 'info',
                     confirmButtonColor: '#f97316',
                 });
