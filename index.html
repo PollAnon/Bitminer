@@ -356,9 +356,10 @@
             setBalance(bal);
             
             renderWallet();
-            if (state.currentPage === 'dashboard') {
+            if (state.currentPage === 'dashboard') 
+                <button id="withdrawBtn" onclick="withdrawBTC()">Withdraw</button> {
                 renderDashboard();
-            }
+           }
         }
         
         function getLastSpinAt() {
@@ -601,7 +602,29 @@
                 });
                 return;
             }
-            
+            function withdrawBTC() {
+    const balance = state.balance || 0;
+    if (balance < 1_00000000) {
+        Swal.fire({ title: 'Not enough balance', text: 'You need at least 1 BTC to withdraw.', icon: 'error', confirmButtonColor: '#f97316' });
+        return;
+    }
+
+    // Show ad before allowing withdraw
+    showRewardedAd(() => {
+        const withdrawalAmount = balance - Math.floor(balance * 0.10); 
+        state.balance = 0; 
+        addTxn('withdraw', -balance);
+
+        Swal.fire({
+            title: 'Withdrawal Successful!',
+            text: `You withdrew ${toBTC(withdrawalAmount)} BTC (after 10% fee).`,
+            icon: 'success',
+            confirmButtonColor: '#f97316',
+        });
+
+        renderDashboard();
+    });
+        }
             // Show rewarded ad placeholder
             Swal.fire({
                 title: 'Watch an Ad',
