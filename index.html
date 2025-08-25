@@ -1,0 +1,1318 @@
+ 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MinerSim - Crypto Energy Mining</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #0f172a 50%, #1a365d 100%);
+            color: #f8fafc;
+        }
+        .progress-ring__circle {
+            transition: stroke-dashoffset 0.35s;
+            transform: rotate(-90deg);
+            transform-origin: 50% 50%;
+        }
+        
+        .wheel {
+            width: 300px;
+            height: 300px;
+            position: relative;
+            border-radius: 50%;
+            overflow: hidden;
+            transition: transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99);
+            transform: rotate(0deg);
+            box-shadow: 0 0 0 8px #1e293b, 0 0 30px rgba(0, 0, 0, 0.5);
+            will-change: transform;
+            backface-visibility: hidden;
+            transform-style: preserve-3d;
+        }
+        
+        .wheel-section {
+            position: absolute;
+            width: 50%;
+            height: 50%;
+            transform-origin: 100% 100%;
+            left: 0;
+            top: 0;
+            border: 1px solid #1e293b;
+            box-sizing: border-box;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 18px;
+            backface-visibility: hidden;
+            transform-style: preserve-3d;
+        }
+        
+        .gift-box {
+            width: 120px;
+            height: 120px;
+            background: linear-gradient(135deg, #f59e0b, #f97316);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .gift-box:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px rgba(0, 0, 0, 0.2);
+        }
+        
+        .gift-box::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                to bottom right,
+                rgba(255, 255, 255, 0.3) 0%,
+                rgba(255, 255, 255, 0) 60%
+            );
+            transform: rotate(30deg);
+        }
+        
+        .gift-box.opened {
+            background: linear-gradient(135deg, #10b981, #059669);
+        }
+        
+        .gift-box.opened::after {
+            content: attr(data-amount);
+            position: absolute;
+            color: white;
+            font-weight: bold;
+            font-size: 18px;
+        }
+        
+        .nav-link {
+            position: relative;
+        }
+        
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background-color: #f97316;
+            transition: width 0.3s ease;
+        }
+        
+        .nav-link:hover::after {
+            width: 100%;
+        }
+        
+        .nav-link.active::after {
+            width: 100%;
+        }
+        
+        @media (max-width: 768px) {
+            .wheel {
+                width: 250px;
+                height: 250px;
+            }
+            
+            .gift-box {
+                width: 80px;
+                height: 80px;
+            }
+        }
+    </style>
+</head>
+<script type="module" src="https://securepubads.shareus.io/scripts/tag/js/gpt.js"></script>
+<script>
+  window._shareustag = window._shareustag || {cmd: []};
+    _shareustag.cmd.push(function() {
+        _shareustag.defineRewardAdSlot('/shareus-admanager/6436170385/79ekOy0a6A/Rewarded ads');
+          });
+          </script>
+<body>
+    <!-- App Container -->
+    <div id="app" class="min-h-screen flex flex-col">
+        <!-- Navigation -->
+        <nav class="bg-gradient-to-r from-slate-800 to-blue-900 shadow-lg">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex items-center justify-between h-16">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0 flex items-center">
+                            <span class="text-2xl font-bold text-orange-500">⚡</span>
+                            <span class="ml-2 text-xl font-bold text-white">MineSim</span>
+                        </div>
+                        <div class="hidden md:block">
+                            <div class="ml-10 flex items-baseline space-x-4" id="nav-links">
+                                <!-- Links will be added dynamically -->
+                            </div>
+                        </div>
+                    </div>
+                    <div class="hidden md:block">
+                        <div class="ml-4 flex items-center md:ml-6">
+                            <span id="user-email" class="text-gray-300 mr-4"></span>
+                            <button id="logout-btn" class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition duration-150 ease-in-out">
+                                Sign Out
+                            </button>
+                        </div>
+                    </div>
+                    <div class="-mr-2 flex md:hidden">
+                        <button id="mobile-menu-button" class="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-white hover:bg-gray-700 focus:outline-none">
+                            <svg class="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Mobile menu -->
+            <div class="md:hidden hidden" id="mobile-menu">
+                <div class="px-2 pt-2 pb-3 space-y-1 sm:px-3" id="mobile-nav-links">
+                    <!-- Mobile links will be added dynamically -->
+                </div>
+                <div class="pt-4 pb-3 border-t border-gray-700">
+                    <div class="flex items-center px-5">
+                        <div class="flex-shrink-0">
+                            <svg class="h-10 w-10 rounded-full text-gray-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                            </svg>
+                        </div>
+                        <div class="ml-3">
+                            <div id="mobile-user-email" class="text-base font-medium text-white"></div>
+                        </div>
+                    </div>
+                    <div class="mt-3 px-2 space-y-1">
+                        <button id="mobile-logout-btn" class="block w-full text-left px-3 py-2 rounded-md text-base font-medium text-gray-400 hover:text-white hover:bg-gray-700">
+                            Sign Out
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+        
+        <!-- Main Content -->
+        <main class="flex-grow">
+            <!-- Welcome Screens -->
+            <div id="welcome-screen" class="hidden">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                    <div class="bg-gradient-to-br from-slate-800 to-blue-900 rounded-xl shadow-lg p-8 text-center">
+                        <h1 class="text-4xl font-bold text-orange-500 mb-6">Welcome to MineSim! ⚡</h1>
+                        <p class="text-xl text-gray-300 mb-8">The mining simulator that pays REAL money! 🤑💰</p>
+                        <div class="bg-slate-700 rounded-lg p-6 max-w-2xl mx-auto mb-8">
+                            <p class="text-gray-300 mb-4">Start mining Crypto Energy (CE) right away and withdraw real Bitcoin when you reach 5 CE!</p>
+                            <p class="text-gray-300">Withdrawals processed within 7 business days.</p>
+                        </div>
+                        <button onclick="hideWelcomeScreen()" class="bg-orange-500 hover:bg-orange-600 text-white px-8 py-3 rounded-lg text-lg font-medium transition duration-150 ease-in-out">
+                            Start Mining Now!
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div id="welcome-back-screen" class="hidden">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                    <div class="bg-gradient-to-br from-slate-800 to-blue-900 rounded-xl shadow-lg p-8 text-center">
+                        <h1 class="text-4xl font-bold text-orange-500 mb-6">Welcome Back to MineSim! ⚡</h1>
+                        <p class="text-xl text-gray-300 mb-8">Keep mining to earn more Crypto Energy! 🤑💰</p>
+                        <div class="bg-slate-700 rounded-lg p-6 max-w-2xl mx-auto mb-8">
+                            <p class="text-gray-300">Your current balance: <span class="text-orange-500 font-bold">${getBalance()} CE</span></p>
+                        </div>
+                        <button onclick="hideWelcomeBackScreen()" class="bg-orange-500 hover:bg-orange-600 text-white px-8 py-3 rounded-lg text-lg font-medium transition duration-150 ease-in-out">
+                            Continue Mining
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pages will be loaded here dynamically -->
+            <div id="page-content" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 hidden"></div>
+        </main>
+        
+        <!-- Footer -->
+        <footer class="bg-slate-800 py-4">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-gray-400 text-sm">
+                <p>MineSim - Official © 2024 All Rights Reserved</p>
+            </div>
+        </footer>
+    </div>
+    
+    <!-- Withdraw Modal -->
+    <div id="withdraw-modal" class="fixed z-10 inset-0 overflow-y-auto hidden">
+        <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 transition-opacity" aria-hidden="true">
+                <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
+            </div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div class="inline-block align-bottom bg-slate-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <div class="bg-slate-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <h3 class="text-lg leading-6 font-medium text-white mb-4">Withdraw Bitcoin</h3>
+                    <div class="mt-2">
+                        <p class="text-gray-300 mb-4">Minimum withdrawal amount is 5.00000000 Crypto Energy.</p>
+                        <p class="text-gray-400 mb-4">Please continue activities until you reach the minimum withdrawal threshold.</p>
+                        <p class="text-gray-300">Withdrawals are processed within 7 business days after request.</p>
+                    </div>
+                </div>
+                <div class="bg-slate-800 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button type="button" id="close-withdraw-modal-btn" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-orange-500 text-base font-medium text-white hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 sm:ml-3 sm:w-auto sm:text-sm transition duration-150 ease-in-out" onclick="hideWithdrawModal(); navigateTo('dashboard')">
+                        OK
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div id="login-modal" class="fixed z-10 inset-0 overflow-y-auto hidden">
+        <div class="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+            <div class="fixed inset-0 transition-opacity" aria-hidden="true">
+                <div class="absolute inset-0 bg-gray-500 opacity-75"></div>
+            </div>
+            <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+            <div class="inline-block align-bottom bg-slate-800 rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                <div class="bg-slate-800 px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                    <h3 class="text-lg leading-6 font-medium text-white mb-4">Login / Sign Up</h3>
+                    <div class="mt-2">
+                        <div class="mb-4">
+                            <label for="email" class="block text-sm font-medium text-gray-300 mb-1">Email</label>
+                            <input type="email" id="email" class="bg-slate-700 text-white focus:ring-orange-500 focus:border-orange-500 block w-full px-3 py-2 sm:text-sm border-gray-600 rounded-md" placeholder="your@email.com">
+                        </div>
+                        <div class="mb-4">
+                            <label for="password" class="block text-sm font-medium text-gray-300 mb-1">Password</label>
+                            <input type="password" id="password" class="bg-slate-700 text-white focus:ring-orange-500 focus:border-orange-500 block w-full px-3 py-2 sm:text-sm border-gray-600 rounded-md" placeholder="••••••••">
+                        </div>
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center">
+                                <input id="remember-me" name="remember-me" type="checkbox" class="h-4 w-4 text-orange-500 focus:ring-orange-500 border-gray-600 rounded">
+                                <label for="remember-me" class="ml-2 block text-sm text-gray-300">Remember me</label>
+                            </div>
+                        </div>
+                        <div class="text-red-500 text-sm mb-4 hidden" id="login-error"></div>
+                    </div>
+                </div>
+                <div class="bg-slate-800 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                    <button type="button" id="login-btn" class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-orange-500 text-base font-medium text-white hover:bg-orange-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 sm:ml-3 sm:w-auto sm:text-sm transition duration-150 ease-in-out">
+                        Login
+                    </button>
+                    <button type="button" id="signup-btn" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-600 shadow-sm px-4 py-2 bg-slate-700 text-base font-medium text-gray-300 hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm transition duration-150 ease-in-out">
+                        Sign Up
+                    </button>
+                    <button type="button" id="cancel-login-btn" class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-600 shadow-sm px-4 py-2 bg-slate-700 text-base font-medium text-gray-300 hover:bg-slate-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-orange-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm transition duration-150 ease-in-out">
+                        Cancel
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Scripts -->
+    <script>
+        
+        // App State
+        const state = {
+            currentUser: null,
+            currentPage: 'dashboard',
+            miningInterval: null,
+            miningProgress: 0,
+            miningCycleStartedAt: null,
+            canClaim: false,
+            spinCooldown: null,
+            checkInCooldown: null,
+            openedGifts: {}
+        };
+        
+        // Utility Functions
+        function randInt(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+        
+        function toBTC(sats) {
+            return (sats / 1e8).toFixed(8);
+        }
+        
+        function toSats(btcString) {
+            return Math.round(parseFloat(btcString) * 1e8);
+        }
+        
+        function msUntil(tsMs) { 
+            return Math.max(0, tsMs - Date.now()); 
+        }
+        
+        function formatHHMMSS(ms) {
+            const s = Math.ceil(ms/1000); 
+            const h = Math.floor(s/3600); 
+            const m = Math.floor((s%3600)/60); 
+            const sec = s%60;
+            return `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`;
+        }
+        
+        function formatDate(ts) {
+            const date = new Date(ts);
+            return date.toLocaleString();
+        }
+        
+        // Storage Functions
+        function getLocalUser() {
+            const user = localStorage.getItem('user');
+            return user ? JSON.parse(user) : null;
+        }
+        
+        function setLocalUser(user) {
+            localStorage.setItem('user', JSON.stringify(user));
+        }
+        
+        function getBalance() {
+            return parseInt(localStorage.getItem('balance_sats') || '0', 10);
+        }
+        
+        function setBalance(sats) {
+            localStorage.setItem('balance_sats', String(sats));
+        }
+        
+        function getTransactions() {
+            return JSON.parse(localStorage.getItem('txns') || '[]');
+        }
+        
+        function addTxn(type, sats) {
+            const tx = { 
+                id: crypto.randomUUID(), 
+                ts: Date.now(), 
+                type, 
+                sats 
+            };
+            
+            const txns = getTransactions();
+            txns.unshift(tx);
+            localStorage.setItem('txns', JSON.stringify(txns));
+            
+            const bal = getBalance() + sats;
+            setBalance(bal);
+            
+            renderWallet();
+            if (state.currentPage === 'dashboard') {
+                renderDashboard();
+            }
+        }
+        
+        function getLastSpinAt() {
+            return parseInt(localStorage.getItem('last_spin_at') || '0', 10);
+        }
+        
+        function setLastSpinAt(ts) {
+            localStorage.setItem('last_spin_at', String(ts));
+        }
+        
+        function getLastCheckInAt() {
+            return parseInt(localStorage.getItem('last_checkin_at') || '0', 10);
+        }
+        
+        function setLastCheckInAt(ts) {
+            localStorage.setItem('last_checkin_at', String(ts));
+        }
+        
+        function getMiningCycleStartedAt() {
+            return parseInt(localStorage.getItem('mining_cycle_started_at') || '0', 10);
+        }
+        
+        function setMiningCycleStartedAt(ts) {
+            localStorage.setItem('mining_cycle_started_at', String(ts));
+        }
+        
+        function getOpenedGifts() {
+            return JSON.parse(localStorage.getItem('opened_gifts') || '{}');
+        }
+        
+        function setOpenedGifts(gifts) {
+            localStorage.setItem('opened_gifts', JSON.stringify(gifts));
+        }
+        
+        // Auth Functions
+        async function fakeLocalAuth(email) {
+            const id = localStorage.getItem('user_id') || crypto.randomUUID();
+            localStorage.setItem('user_id', id);
+            const user = { id, email };
+            setLocalUser(user);
+            return user;
+        }
+        
+        async function signUp(email, password) {
+            return fakeLocalAuth(email);
+        }
+        
+        async function signIn(email, password) {
+            return fakeLocalAuth(email);
+        }
+        
+        async function signOut() {
+            localStorage.removeItem('user');
+            state.currentUser = null;
+            showLoginModal();
+        }
+        
+        // Reward Functions
+        function claimMiningReward() {
+            if (!state.canClaim) return;
+            
+            const reward = randInt(1, 5);
+            addTxn('mining', reward);
+            
+            state.canClaim = false;
+            state.miningProgress = 0;
+            state.miningCycleStartedAt = Date.now();
+            setMiningCycleStartedAt(state.miningCycleStartedAt);
+            startMiningTimer(); // Start new cycle immediately
+            
+            Swal.fire({
+                title: 'Reward Claimed!',
+                text: `You earned ${reward} satoshi (${toBTC(reward)} BTC)`,
+                icon: 'success',
+                confirmButtonColor: '#f97316',
+            });
+            
+            renderDashboard();
+        }
+        
+        function spinWheel() {
+            const now = Date.now();
+            const lastSpinAt = getLastSpinAt();
+            
+            if (lastSpinAt > 0 && now - lastSpinAt < 24 * 60 * 60 * 1000) {
+                Swal.fire({
+                    title: 'Cooldown Active',
+                    text: 'You can spin gt again in ' + formatHHMMSS(msUntil(lastSpinAt + 24 * 60 * 60 * 1000)),
+                    icon: 'info',
+                    confirmButtonColor: '#f97316',
+                });
+                return;
+            }
+            
+            // Determine reward (0.00001-0.00009 BTC with 5% chance for 0.00009)
+            let reward;
+            if (Math.random() < 0.05) {
+                reward = 0.00009; // Bonus tile
+            } else {
+                reward = randInt(1, 9) / 100000;
+            }
+            
+            // Animate wheel
+            const wheel = document.getElementById('wheel');
+            const spinDegrees = 360 * 5 + (reward % 8) * 45; // Spin 5 full rotations plus offset based on reward
+            
+            wheel.style.transform = `rotate(${spinDegrees}deg)`;
+            
+            setTimeout(() => {
+                setLastSpinAt(now);
+                addTxn('spin', reward);
+                
+                Swal.fire({
+                    title: 'Spin Complete!',
+                    text: `You won ${reward} BTC`,
+                    icon: 'success',
+                    confirmButtonColor: '#f97316',
+                });
+                
+                renderSpinPage();
+            }, 4000);
+        }
+        
+        function claimDailyCheckIn() {
+            const now = Date.now();
+            const lastCheckInAt = getLastCheckInAt();
+            
+            if (lastCheckInAt > 0 && now - lastCheckInAt < 24 * 60 * 60 * 1000) {
+                Swal.fire({
+                    title: 'Cooldown Active',
+                    text: 'You can check in again in ' + formatHHMMSS(msUntil(lastCheckInAt + 24 * 60 * 60 * 1000)),
+                    icon: 'info',
+                    confirmButtonColor: '#f97316',
+                });
+                return;
+            }
+            
+            const reward = 90; // Fixed reward for check-in
+            setLastCheckInAt(now);
+            addTxn('check-in', reward);
+            
+            Swal.fire({
+                title: 'Daily Check-In!',
+                text: `You earned ${reward} satoshi (${toBTC(reward)} BTC)`,
+                icon: 'success',
+                confirmButtonColor: '#f97316',
+            });
+            
+            renderCheckInPage();
+        }
+        
+        function openGift(giftId) {
+            if (state.openedGifts[giftId]) {
+                Swal.fire({
+                    title: 'Already Opened',
+                    text: `You already opened this gift and earned ${state.openedGifts[giftId]} satoshi`,
+                    icon: 'info',
+                    confirmButtonColor: '#f97316',
+                });
+                return;
+            }
+            
+            // Show rewarded ad placeholder
+            Swal.fire({
+                title: 'Watch an Ad',
+                text: 'Watch a short ad to open this gift',
+                icon: 'info',
+                showCancelButton: true,
+                confirmButtonText: 'Watch Ad',
+                cancelButtonText: 'Cancel',
+                confirmButtonColor: '#f97316',
+                cancelButtonColor: '#6b7280',
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Simulate ad watching
+                    Swal.fire({
+                        title: 'Opening Gift...',
+                        timer: 2000,
+                        timerProgressBar: true,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        },
+                        willClose: () => {
+                            // Determine reward (common 1-9, rare 80-900 with 2% chance)
+                            let reward;
+                            if (Math.random() < 0.02) {
+                                reward = randInt(80, 900); // Rare prize
+                            } else {
+                                reward = randInt(1, 9); // Common prize
+                            }
+                            
+                            state.openedGifts[giftId] = reward;
+                            setOpenedGifts(state.openedGifts);
+                            addTxn('gift', reward);
+                            
+                            Swal.fire({
+                                title: 'Gift Opened!',
+                                html: `You earned <span class="text-orange-500 font-bold">${reward} CE</span> (${toBTC(reward)} Crypto Energy)`,
+                                icon: 'success',
+                                confirmButtonColor: '#f97316',
+                            });
+                            
+                            renderGiftsPage();
+                        }
+                    });
+                }
+            });
+        }
+        
+        // UI Functions
+        function showLoginModal() {
+            document.getElementById('login-modal').classList.remove('hidden');
+            document.getElementById('email').focus();
+        }
+        
+        function hideLoginModal() {
+            document.getElementById('login-modal').classList.add('hidden');
+            document.getElementById('email').value = '';
+            document.getElementById('password').value = '';
+            document.getElementById('login-error').classList.add('hidden');
+            document.getElementById('login-error').textContent = '';
+        }
+        
+        function updateNav(user) {
+            const navLinks = [
+                { id: 'dashboard', text: 'Dashboard' },
+                { id: 'spin', text: 'Daily Spin' },
+                { id: 'checkin', text: 'Daily Check-In' },
+                { id: 'gifts', text: 'Gifts' },
+                { id: 'wallet', text: 'Wallet' },
+                { id: 'settings', text: 'Settings' },
+                { id: 'about', text: 'About' }
+            ];
+            
+            // Desktop nav
+            const desktopNav = document.getElementById('nav-links');
+            desktopNav.innerHTML = '';
+            
+            navLinks.forEach(link => {
+                const a = document.createElement('a');
+                a.href = '#';
+                a.className = `nav-link px-3 py-2 rounded-md text-sm font-medium ${state.currentPage === link.id ? 'text-orange-500 active' : 'text-gray-300 hover:text-white'}`;
+                a.textContent = link.text;
+                a.dataset.page = link.id;
+                a.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    navigateTo(link.id);
+                });
+                desktopNav.appendChild(a);
+            });
+            
+            // Mobile nav
+            const mobileNav = document.getElementById('mobile-nav-links');
+            mobileNav.innerHTML = '';
+            
+            navLinks.forEach(link => {
+                const a = document.createElement('a');
+                a.href = '#';
+                a.className = `block px-3 py-2 rounded-md text-base font-medium ${state.currentPage === link.id ? 'bg-slate-700 text-orange-500' : 'text-gray-300 hover:text-white hover:bg-slate-700'}`;
+                a.textContent = link.text;
+                a.dataset.page = link.id;
+                a.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    navigateTo(link.id);
+                    document.getElementById('mobile-menu').classList.add('hidden');
+                });
+                mobileNav.appendChild(a);
+            });
+            
+            // User info
+            if (user) {
+                document.getElementById('user-email').textContent = user.email;
+                document.getElementById('mobile-user-email').textContent = user.email;
+            } else {
+                document.getElementById('user-email').textContent = '';
+                document.getElementById('mobile-user-email').textContent = '';
+            }
+        }
+        
+        function navigateTo(page) {
+            state.currentPage = page;
+            updateNav(state.currentUser);
+            
+            switch (page) {
+                case 'dashboard':
+                    renderDashboard();
+                    break;
+                case 'spin':
+                    renderSpinPage();
+                    break;
+                case 'checkin':
+                    renderCheckInPage();
+                    break;
+                case 'gifts':
+                    renderGiftsPage();
+                    break;
+                case 'wallet':
+                    renderWallet();
+                    break;
+                case 'settings':
+                    renderSettings();
+                    break;
+                case 'about':
+                    renderAbout();
+                    break;
+                default:
+                    renderDashboard();
+            }
+        }
+        
+        function renderDashboard() {
+            const balance = getBalance();
+            
+            let content = `
+                <div class="space-y-6">
+                    <!-- Wallet Card -->
+                    <div class="bg-gradient-to-br from-slate-700 to-blue-800 rounded-xl shadow-lg p-6">
+                        <h2 class="text-xl font-bold text-white mb-4">Your Wallet</h2>
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-300">Balance</p>
+                                <p class="text-3xl font-bold text-orange-500">${balance} Crypto Energy</p>
+                                <p class="text-gray-400">${toBTC(balance)} Crypto Energy</p>
+                            </div>
+                            <div class="flex space-x-2">
+                                <button onclick="navigateTo('wallet')" class="bg-slate-600 hover:bg-slate-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition duration-150 ease-in-out">
+                                    View History
+                                </button>
+                                <button onclick="showWithdrawModal()" class="bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition duration-150 ease-in-out">
+                                    Withdraw
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Mining Card -->
+                    <div class="bg-slate-700 rounded-xl shadow-lg p-6">
+                        <h2 class="text-xl font-bold text-white mb-4">Mining</h2>
+                        <div class="flex flex-col items-center">
+                            <div class="relative w-48 h-48 mb-6">
+                                <svg class="w-full h-full" viewBox="0 0 100 100">
+                                    <circle class="text-slate-600" stroke-width="8" stroke="currentColor" fill="transparent" r="40" cx="50" cy="50" />
+                                    <circle id="mining-progress-circle" class="text-orange-500 progress-ring__circle" stroke-width="8" stroke-linecap="round" stroke="currentColor" fill="transparent" r="40" cx="50" cy="50" 
+                                        stroke-dasharray="251.2" stroke-dashoffset="${251.2 - (251.2 * state.miningProgress / 100)}" />
+                                    <text x="50" y="50" text-anchor="middle" dy=".3em" class="text-white text-xl font-bold">${Math.round(state.miningProgress)}%</text>
+                                </svg>
+                            </div>
+                            <button id="claim-btn" class="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-lg text-lg font-medium transition duration-150 ease-in-out ${state.canClaim ? '' : 'opacity-50 cursor-not-allowed'}" ${state.canClaim ? '' : 'disabled'}>
+                                Watch Ad to Claim
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Quick Actions -->
+                    <div class="bg-slate-700 rounded-xl shadow-lg p-6">
+                        <h2 class="text-xl font-bold text-white mb-4">Quick Actions</h2>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <button onclick="navigateTo('spin')" class="bg-slate-600 hover:bg-slate-500 text-white px-4 py-3 rounded-lg text-sm font-medium transition duration-150 ease-in-out flex items-center justify-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                                </svg>
+                                Daily Spin
+                            </button>
+                            <button onclick="navigateTo('checkin')" class="bg-slate-600 hover:bg-slate-500 text-white px-4 py-3 rounded-lg text-sm font-medium transition duration-150 ease-in-out flex items-center justify-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                </svg>
+                                Daily Check-In
+                            </button>
+                            <button onclick="navigateTo('gifts')" class="bg-slate-600 hover:bg-slate-500 text-white px-4 py-3 rounded-lg text-sm font-medium transition duration-150 ease-in-out flex items-center justify-center">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4H5z" />
+                                </svg>
+                                Open Gifts
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- How It Works -->
+                    <div class="bg-slate-700 rounded-xl shadow-lg p-6">
+                        <h2 class="text-xl font-bold text-white mb-4">How It Works</h2>
+                        <div class="text-gray-300 space-y-4">
+                            <p>This is a simulation app that demonstrates how Bitcoin mining and rewards work.</p>
+                            <p>While the mining and rewards are simulated, withdrawals of 500 CE or more will be processed and paid within 7 business days.</p>
+                            <p>Keep mining daily to reach the withdrawal threshold!</p>
+                        </div>
+                    </div>
+
+                    <!-- AD: BANNER -->
+                    <div class="bg-slate-800 rounded-xl shadow-lg p-4 flex items-center justify-center">
+                        <div class="text-center">
+                            <p class="text-gray-400 mb-2">Advertisement</p>
+                            <div class="bg-slate-700 w-full h-24 rounded-lg flex items-center justify-center text-gray-500">
+                                Banner Ad Placeholder
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('page-content').innerHTML = content;
+            document.getElementById('claim-btn').addEventListener('click', claimMiningReward);
+        }
+        
+        function renderSpinPage() {
+            const lastSpinAt = getLastSpinAt();
+            const now = Date.now();
+            const canSpin = lastSpinAt === 0 || now - lastSpinAt >= 24 * 60 * 60 * 1000;
+            
+            const wheelSections = [
+                { color: '#ef4444', text: '0.00001' },
+                { color: '#f97316', text: '0.00002' },
+                { color: '#f59e0b', text: '0.00003' },
+                { color: '#84cc16', text: '0.00004' },
+                { color: '#10b981', text: '0.00005' },
+                { color: '#0ea5e9', text: '0.00006' },
+                { color: '#6366f1', text: '0.00007' },
+                { color: '#8b5cf6', text: '0.00008' }
+            ];
+            
+            // Add the bonus tiles (quadra bitcoin)
+            wheelSections[randInt(0, 7)].text = '0.00009';
+            wheelSections[randInt(0, 7)].text = '0.00009';
+            
+            let wheelHTML = '';
+            for (let i = 0; i < 8; i++) {
+                const angle = i * 45;
+                wheelHTML += `
+                    <div class="wheel-section" style="transform: rotate(${angle}deg); background-color: ${wheelSections[i].color};">
+                        <span style="transform: rotate(${angle + 22.5}deg); transform-origin: center;">${wheelSections[i].text}</span>
+                    </div>
+                `;
+            }
+            
+            let content = `
+                <div class="space-y-6">
+                    <div class="bg-slate-700 rounded-xl shadow-lg p-6">
+                        <h2 class="text-xl font-bold text-white mb-4">Daily Spin</h2>
+                        <p class="text-gray-300 mb-6">Spin once every 24 hours for a chance to win 0.00001-0.00009 BTC!</p>
+                        
+                        <div class="flex flex-col items-center">
+                            <div class="wheel" id="wheel">
+                                ${wheelHTML}
+                            </div>
+                            
+                            <button id="spin-btn" class="mt-8 bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-lg text-lg font-medium transition duration-150 ease-in-out ${canSpin ? '' : 'opacity-50 cursor-not-allowed'}" ${canSpin ? '' : 'disabled'}>
+                                ${canSpin ? 'Spin Now' : 'Come Back Later'}
+                            </button>
+                            
+                            ${!canSpin ? `
+                                <div class="mt-4 text-gray-300">
+                                    Next spin available in: <span id="spin-cooldown" class="font-bold">${formatHHMMSS(msUntil(lastSpinAt + 24 * 60 * 60 * 1000))}</span>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('page-content').innerHTML = content;
+            document.getElementById('spin-btn').addEventListener('click', spinWheel);
+            
+            if (!canSpin) {
+                // Update countdown timer
+                state.spinCooldown = setInterval(() => {
+                    const remaining = msUntil(lastSpinAt + 24 * 60 * 60 * 1000);
+                    if (remaining <= 0) {
+                        clearInterval(state.spinCooldown);
+                        renderSpinPage();
+                    } else {
+                        document.getElementById('spin-cooldown').textContent = formatHHMMSS(remaining);
+                    }
+                }, 1000);
+            }
+        }
+        
+        function renderCheckInPage() {
+            const lastCheckInAt = getLastCheckInAt();
+            const now = Date.now();
+            const canCheckIn = lastCheckInAt === 0 || now - lastCheckInAt >= 24 * 60 * 60 * 1000;
+            
+            let content = `
+                <div class="space-y-6">
+                    <div class="bg-slate-700 rounded-xl shadow-lg p-6">
+                        <h2 class="text-xl font-bold text-white mb-4">Daily Check-In</h2>
+                        <p class="text-gray-300 mb-6">Check in once every 24 hours to claim 90 satoshi!</p>
+                        
+                        <div class="flex flex-col items-center">
+                            <div class="bg-slate-800 rounded-full w-48 h-48 flex items-center justify-center mb-6">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-24 w-24 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                </svg>
+                            </div>
+                            
+                            <button id="checkin-btn" class="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-lg text-lg font-medium transition duration-150 ease-in-out ${canCheckIn ? '' : 'opacity-50 cursor-not-allowed'}" ${canCheckIn ? '' : 'disabled'}>
+                                ${canCheckIn ? 'Claim 90 Sats' : 'Come Back Later'}
+                            </button>
+                            
+                            ${!canCheckIn ? `
+                                <div class="mt-4 text-gray-300">
+                                    Next check-in available in: <span id="checkin-cooldown" class="font-bold">${formatHHMMSS(msUntil(lastCheckInAt + 24 * 60 * 60 * 1000))}</span>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('page-content').innerHTML = content;
+            document.getElementById('checkin-btn').addEventListener('click', claimDailyCheckIn);
+            
+            if (!canCheckIn) {
+                // Update countdown timer
+                state.checkInCooldown = setInterval(() => {
+                    const remaining = msUntil(lastCheckInAt + 24 * 60 * 60 * 1000);
+                    if (remaining <= 0) {
+                        clearInterval(state.checkInCooldown);
+                        renderCheckInPage();
+                    } else {
+                        document.getElementById('checkin-cooldown').textContent = formatHHMMSS(remaining);
+                    }
+                }, 1000);
+            }
+        }
+        
+        function renderGiftsPage() {
+            state.openedGifts = getOpenedGifts();
+            
+            const gifts = Array.from({ length: 8 }, (_, i) => i + 1);
+            
+            let content = `
+                <div class="space-y-6">
+                    <div class="bg-slate-700 rounded-xl shadow-lg p-6">
+                        <h2 class="text-xl font-bold text-white mb-4">Gifts</h2>
+                        <p class="text-gray-300 mb-6">Open gifts to earn rewards! Watch an ad to unlock each gift.</p>
+                        
+                        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                            ${gifts.map(giftId => `
+                                <div class="flex flex-col items-center">
+                                    <div onclick="openGift(${giftId})" class="gift-box ${state.openedGifts[giftId] ? 'opened' : ''}" ${state.openedGifts[giftId] ? `data-amount="${state.openedGifts[giftId]} sats"` : ''}>
+                                        ${state.openedGifts[giftId] ? '' : `
+                                            <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v13m0-13V6a2 2 0 112 2h-2zm0 0V5.5A2.5 2.5 0 109.5 8H12zm-7 4h14M5 12a2 2 0 110-4h14a2 2 0 110 4H5z" />
+                                            </svg>
+                                        `}
+                                    </div>
+                                    <span class="mt-2 text-gray-300">Gift #${giftId}</span>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('page-content').innerHTML = content;
+        }
+        
+        function renderWallet() {
+            const balance = getBalance();
+            const transactions = getTransactions();
+            
+            let content = `
+                <div class="space-y-6">
+                    <div class="bg-slate-700 rounded-xl shadow-lg p-6">
+                        <h2 class="text-xl font-bold text-white mb-4">Your Wallet</h2>
+                        
+                        <div class="mb-6">
+                            <p class="text-gray-300">Total Balance</p>
+                            <p class="text-3xl font-bold text-orange-500">${balance} sats</p>
+                            <p class="text-gray-400">${toBTC(balance)} BTC</p>
+                        </div>
+                        
+                        <h3 class="text-lg font-bold text-white mb-4">Transaction History</h3>
+                        
+                        <div class="overflow-x-auto">
+                            <table class="min-w-full divide-y divide-slate-600">
+                                <thead class="bg-slate-800">
+                                    <tr>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Date/Time</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Type</th>
+                                        <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-300 uppercase tracking-wider">Amount</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-slate-700 divide-y divide-slate-600">
+                                    ${transactions.length > 0 ? 
+                                        transactions.map(tx => `
+                                            <tr>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300">${formatDate(tx.ts)}</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-300 capitalize">${tx.type}</td>
+                                                <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-green-400">+${tx.sats} Crypto Energy</td>
+                                            </tr>
+                                        `).join('') : `
+                                            <tr>
+                                                <td colspan="3" class="px-6 py-4 whitespace-nowrap text-sm text-center text-gray-400">No transactions yet</td>
+                                            </tr>
+                                        `
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('page-content').innerHTML = content;
+        }
+        
+        function renderAbout() {
+            let content = `
+                <div class="space-y-6">
+                    <div class="bg-slate-700 rounded-xl shadow-lg p-6">
+                        <h2 class="text-xl font-bold text-white mb-4">About MinerSim</h2>
+                        
+                        <div class="text-gray-300 space-y-4">
+                            <p>Welcome to MinerSim - a crypto energy mining simulation app!</p>
+                            
+                            <p>While this app simulates the mining process, there is no actual cryptocurrency mining happening. 
+                            Instead, you earn Crypto Energy (CE) through various activities in the app.</p>
+                            
+                            <p>Crypto Energy (CE) represents the value you accumulate through:</p>
+                            <ul class="list-disc pl-5 space-y-2">
+                                <li>Simulated mining cycles</li>
+                                <li>Daily spins and check-ins</li>
+                                <li>Opening gift boxes</li>
+                            </ul>
+                            
+                            <p>All rewards are paid in Crypto Energy which can be withdrawn once you reach the minimum threshold of 5 Crypto Energy.</p>
+                            
+                            <p>This is a fun simulation that demonstrates how crypto mining rewards work, without the need for actual mining hardware or energy consumption.</p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('page-content').innerHTML = content;
+        }
+
+        function renderSettings() {
+            let content = `
+                <div class="space-y-6">
+                    <div class="bg-slate-700 rounded-xl shadow-lg p-6">
+                        <h2 class="text-xl font-bold text-white mb-6">Settings</h2>
+                        
+                        <div class="space-y-4">
+                            <div>
+                                <h3 class="text-lg font-medium text-white mb-2">Account</h3>
+                                <p class="text-gray-300 mb-4">Logged in as: ${state.currentUser.email}</p>
+                                <button id="logout-settings-btn" class="bg-orange-500 hover:bg-orange-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition duration-150 ease-in-out">
+                                    Sign Out
+                                </button>
+                            </div>
+                            
+                            <div class="pt-4 border-t border-slate-600">
+                                <h3 class="text-lg font-medium text-white mb-2">Local Data</h3>
+                                <p class="text-gray-300 mb-4">This will delete all your local data and reset the app.</p>
+                                <button id="reset-data-btn" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition duration-150 ease-in-out">
+                                    Reset Local Data
+                                </button>
+                            </div>
+                            
+                            <div class="pt-4 border-t border-slate-600">
+                                <h3 class="text-lg font-medium text-white mb-2">Debug Info</h3>
+                                <div class="bg-slate-800 p-4 rounded-lg">
+                                    <pre class="text-xs text-gray-300 overflow-x-auto">${JSON.stringify({
+                                        user: state.currentUser,
+                                        balance: getBalance(),
+                                        lastSpinAt: getLastSpinAt(),
+                                        lastCheckInAt: getLastCheckInAt(),
+                                        miningCycleStartedAt: getMiningCycleStartedAt(),
+                                        transactions: getTransactions(),
+                                        openedGifts: getOpenedGifts()
+                                    }, null, 2)}</pre>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('page-content').innerHTML = content;
+            document.getElementById('logout-settings-btn').addEventListener('click', signOut);
+            document.getElementById('reset-data-btn').addEventListener('click', () => {
+                Swal.fire({
+                    title: 'Reset Local Data?',
+                    text: "This will delete all your local data and cannot be undone!",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#f97316',
+                    cancelButtonColor: '#6b7280',
+                    confirmButtonText: 'Yes, reset!'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        localStorage.clear();
+                        state.currentUser = null;
+                        showLoginModal();
+                    }
+                });
+            });
+        }
+        
+        // Mining Timer
+        function startMiningTimer() {
+            const cycleStartedAt = getMiningCycleStartedAt();
+            const now = Date.now();
+            
+            if (cycleStartedAt > 0 && now - cycleStartedAt < 30000) {
+                // Resume existing cycle
+                state.miningCycleStartedAt = cycleStartedAt;
+                const elapsed = now - cycleStartedAt;
+                state.miningProgress = (elapsed / 30000) * 100;
+                
+                if (state.miningProgress >= 100) {
+                    state.canClaim = true;
+                    state.miningProgress = 100;
+                }
+            } else {
+                // Start new cycle
+                state.miningCycleStartedAt = now;
+                setMiningCycleStartedAt(now);
+                state.miningProgress = 0;
+                state.canClaim = false;
+            }
+            
+            // Clear any existing interval
+            if (state.miningInterval) {
+                clearInterval(state.miningInterval);
+            }
+            
+            // Start new interval
+            state.miningInterval = setInterval(() => {
+                const now = Date.now();
+                const elapsed = now - state.miningCycleStartedAt;
+                state.miningProgress = (elapsed / 30000) * 100;
+                
+                if (state.miningProgress >= 100) {
+                    state.miningProgress = 100;
+                    state.canClaim = true;
+                    
+                    if (state.currentPage === 'dashboard') {
+                        renderDashboard();
+                    }
+                } else if (state.currentPage === 'dashboard') {
+                    // Update progress circle
+                    const circle = document.getElementById('mining-progress-circle');
+                    if (circle) {
+                        circle.style.strokeDashoffset = 251.2 - (251.2 * state.miningProgress / 100);
+                    }
+                    
+                    // Update percentage text
+                    const text = document.querySelector('#mining-progress-circle + text');
+                    if (text) {
+                        text.textContent = `${Math.round(state.miningProgress)}%`;
+                    }
+                }
+            }, 100);
+        }
+        
+        // Modal Functions
+        function showWithdrawModal() {
+            document.getElementById('withdraw-modal').classList.remove('hidden');
+        }
+
+        function hideWithdrawModal() {
+            document.getElementById('withdraw-modal').classList.add('hidden');
+        }
+
+        // Welcome Screen Functions
+        function showWelcomeScreen() {
+            document.getElementById('welcome-screen').classList.remove('hidden');
+            document.getElementById('page-content').classList.add('hidden');
+        }
+
+        function hideWelcomeScreen() {
+            document.getElementById('welcome-screen').classList.add('hidden');
+            document.getElementById('page-content').classList.remove('hidden');
+            navigateTo('dashboard');
+        }
+
+        function showWelcomeBackScreen() {
+            document.getElementById('welcome-back-screen').classList.remove('hidden');
+            document.getElementById('page-content').classList.add('hidden');
+            // Update balance display
+            const balanceEl = document.querySelector('#welcome-back-screen .bg-slate-700 p');
+            if (balanceEl) {
+                balanceEl.innerHTML = `Your current balance: <span class="text-orange-500 font-bold">${getBalance()} CE</span>`;
+            }
+        }
+
+        function hideWelcomeBackScreen() {
+            document.getElementById('welcome-back-screen').classList.add('hidden');
+            document.getElementById('page-content').classList.remove('hidden');
+            navigateTo('dashboard');
+        }
+
+        // Initialize App
+        function initApp() {
+            // Check for existing user
+            const user = getLocalUser();
+            
+            if (user) {
+                state.currentUser = user;
+                updateNav(user);
+                
+                // Check if this is first login
+                const firstLogin = localStorage.getItem('firstLogin');
+                if (!firstLogin) {
+                    localStorage.setItem('firstLogin', 'true');
+                    showWelcomeScreen();
+                } else {
+                    showWelcomeBackScreen();
+                }
+                
+                startMiningTimer();
+            } else {
+                showLoginModal();
+            }
+            
+            // Event listeners
+            document.getElementById('login-btn').addEventListener('click', async () => {
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+                const errorEl = document.getElementById('login-error');
+                
+                if (!email || !password) {
+                    errorEl.textContent = 'Please enter both email and password';
+                    errorEl.classList.remove('hidden');
+                    return;
+                }
+                
+                try {
+                    const user = await signIn(email, password);
+                    state.currentUser = user;
+                    setLocalUser(user);
+                    updateNav(user);
+                    hideLoginModal();
+                    navigateTo('dashboard');
+                    startMiningTimer();
+                } catch (error) {
+                    errorEl.textContent = 'Login failed. Please try again.';
+                    errorEl.classList.remove('hidden');
+                }
+            });
+            
+            document.getElementById('signup-btn').addEventListener('click', async () => {
+                const email = document.getElementById('email').value;
+                const password = document.getElementById('password').value;
+                const errorEl = document.getElementById('login-error');
+                
+                if (!email || !password) {
+                    errorEl.textContent = 'Please enter both email and password';
+                    errorEl.classList.remove('hidden');
+                    return;
+                }
+                
+                try {
+                    const user = await signUp(email, password);
+                    state.currentUser = user;
+                    setLocalUser(user);
+                    updateNav(user);
+                    hideLoginModal();
+                    navigateTo('dashboard');
+                    startMiningTimer();
+                    
+                    // Give a welcome bonus
+                    addTxn('welcome', 100);
+                    
+                    Swal.fire({
+                        title: 'Welcome!',
+                        text: 'You received 100 CE as a welcome bonus!',
+                        icon: 'success',
+                        confirmButtonColor: '#f97316',
+                    });
+                } catch (error) {
+                    errorEl.textContent = 'Signup failed. Please try again.';
+                    errorEl.classList.remove('hidden');
+                }
+            });
+            
+            document.getElementById('cancel-login-btn').addEventListener('click', hideLoginModal);
+            document.getElementById('logout-btn').addEventListener('click', signOut);
+            document.getElementById('mobile-logout-btn').addEventListener('click', signOut);
+            
+            // Mobile menu toggle
+            document.getElementById('mobile-menu-button').addEventListener('click', () => {
+                const menu = document.getElementById('mobile-menu');
+                if (menu.classList.contains('hidden')) {
+                    menu.classList.remove('hidden');
+                } else {
+                    menu.classList.add('hidden');
+                }
+            });
+            
+            // Global functions for inline event handlers
+            window.navigateTo = navigateTo;
+            window.openGift = openGift;
+            window.hideWelcomeScreen = hideWelcomeScreen;
+            window.hideWelcomeBackScreen = hideWelcomeBackScreen;
+            
+            // AD: REWARDED placeholder
+            window.showRewardedAd = async function(onEarned) {
+                // TODO: Insert Shareus rewarded ad code here and fire onEarned() on reward
+                // For MVP, simulate success after 2s
+                setTimeout(() => { onEarned && onEarned(); }, 2000);
+            };
+        }
+        
+        // Start the app when DOM is loaded
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+<p style="border-radius: 8px; text-align: center; font-size: 12px; color: #fff; margin-top: 16px;position: fixed; left: 8px; bottom: 8px; z-index: 10; background: rgba(0, 0, 0, 0.8); padding: 4px 8px;">Made with <img src="https://enzostvs-deepsite.hf.space/logo.svg" alt="DeepSite Logo" style="width: 16px; height: 16px; vertical-align: middle;display:inline-block;margin-right:3px;filter:brightness(0) invert(1);"><a href="https://enzostvs-deepsite.hf.space" style="color: #fff;text-decoration: underline;" target="_blank" >DeepSite</a> - 🧬 <a href="https://enzostvs-deepsite.hf.space?remix=Luckyslots6969/bitminer" style="color: #fff;text-decoration: underline;" target="_blank" >Remix</a></p></body>
+</html
